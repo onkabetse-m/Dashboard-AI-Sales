@@ -176,3 +176,52 @@ elif page == "AI Predictions":
             interaction_pred = clf_model.predict([[c_day, c_month, c_year, c_dow]])
             label = clf_model.classes_[interaction_pred[0]]
             st.success(f"🔍 Predicted Interaction: {label}")
+            
+elif page == "AI Binary Prediction":
+    st.subheader("🧠 AI Binary Interaction Classifier")
+ 
+    with st.form("binary_form"):
+        col1, col2 = st.columns(2)
+ 
+        with col1:
+            b_day = st.number_input("Day", 1, 31, 15, key="b1")
+            b_month = st.number_input("Month", 1, 12, 5, key="b2")
+            b_year = st.number_input("Year", 2023, 2025, 2025, key="b3")
+            b_dow = st.number_input("Day of Week (0=Mon)", 0, 6, 2, key="b4")
+            sale_made = st.selectbox("Sale Made", ["Yes", "No"], key="b5")
+            status_code = st.selectbox("Status Code", [200, 304, 404, 500], key="b6")
+ 
+        with col2:
+            product = st.selectbox("Product", df["Product"].unique(), key="b7")
+            team = st.selectbox("Sales Team Name", df["Sales Team Name"].unique(), key="b8")
+            campaign = st.selectbox("Campaign Source", df["Campaign Source"].unique(), key="b9")
+            country = st.selectbox("Country", df["Country"].unique(), key="b10")
+ 
+        binary_submit = st.form_submit_button("Predict Interaction Type")
+ 
+    if binary_submit:
+        from sklearn.preprocessing import LabelEncoder
+ 
+        # Encode like training
+        def encode(col, val):
+            encoder = LabelEncoder()
+            encoder.fit(df[col])
+            return encoder.transform([val])[0]
+ 
+        product_enc = encode("Product", product)
+        team_enc = encode("Sales Team Name", team)
+        campaign_enc = encode("Campaign Source", campaign)
+        country_enc = encode("Country", country)
+        sale_val = 1 if sale_made == "Yes" else 0
+ 
+        features = [[
+            b_day, b_month, b_year, b_dow, product_enc, team_enc,
+            campaign_enc, country_enc, sale_val, status_code
+        ]]
+ 
+        result = binary_model.predict(features)[0]
+ 
+        if result == 1:
+            st.success("✅ Important Interaction: (Demo, Job Request, or AI Assistant)")
+        else:
+            st.info("ℹ️ Likely classified as 'Other'")
